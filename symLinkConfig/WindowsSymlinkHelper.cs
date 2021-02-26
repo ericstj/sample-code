@@ -13,15 +13,22 @@ namespace symLinkConfig
 {
     internal static class WindowsSymLinkHelper
     {
-        public static bool TryGetSymLinkTarget(string path, out string target)
+        public static bool TryGetSymLinkTarget(string path, out string target, int maximumSymlinkDepth = 32)
         {
             target = null;
+
+            int depth = 0;
 
             while (IsSymbolicLink(path))
             {
                 // Follow link so long as we are still finding symlinks
                 target = GetSingleSymbolicLinkTarget(path);
                 path = target;
+
+                if (depth++ > maximumSymlinkDepth)
+                {
+                    throw new InvalidOperationException("Exceeded maximum symlink depth");
+                }
             }
 
             return target != null;
@@ -41,17 +48,6 @@ namespace symLinkConfig
             return false;
         }
 
-        internal static string GetSymbolicLinkTarget(string path)
-        {
-            // Follow link so long as we are still finding symlinks
-            do
-            {
-                path = GetSingleSymbolicLinkTarget(path);
-            }
-            while (IsSymbolicLink(path));
-
-            return path;
-        }
 
         internal static string GetSingleSymbolicLinkTarget(string path)
         {
@@ -99,13 +95,16 @@ namespace symLinkConfig
                             continue;
                         }
 
-                        // we only care about SubstituteName
+                        // we only care about SubstituteName.
+                        // Per https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-fscc/b41f1cbf-10df-4a47-98d4-1c52a833d913 print name is only valid for displaying to the user
                         bufferSize = sizeHeader + header.SubstituteNameOffset + header.SubstituteNameLength;
+                        // bufferSize = sizeHeader + Math.Max(header.SubstituteNameOffset + header.SubstituteNameLength, header.PrintNameOffset + header.PrintNameLength);
 
                         if (bytesRead >= bufferSize)
                         {
                             // got entire payload with valid header.
                             string target = Encoding.Unicode.GetString(validBuffer.Slice(sizeHeader + header.SubstituteNameOffset, header.SubstituteNameLength));
+                            // string print = Encoding.Unicode.GetString(validBuffer.Slice(sizeHeader + header.PrintNameOffset, header.PrintNameLength));
 
                             if ((header.Flags & Interop.Kernel32.SYMLINK_FLAG_RELATIVE) != 0)
                             {
