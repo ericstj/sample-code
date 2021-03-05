@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- GenerateBuildDependencyFile requires a package in order to include runtimeTargets.  Tack them on to an existing package -->
+    <PackageReference Include="Microsoft.NETCore.Platforms" Version="5.0.0" />
+    <RuntimeTargetsCopyLocalItems Include="native\**\*.*" 
+                                  AssetType="native" 
+                                  DestinationSubDirectory="runtimes\%(RecursiveDir)native" 
+                                  NuGetPackageId="Microsoft.NETCore.Platforms"
+                                  RuntimeIdentifier="$([System.String]::new('%(RecursiveDir)').Trim('\'))"  />
+    <Content Include="@(RuntimeTargetsCopyLocalItems)" 
+             Link="%(DestinationSubDirectory)\%(FileName)%(Extension)" 
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+
+</Project>
