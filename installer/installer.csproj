@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishTrimmed>true</PublishTrimmed>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <Target Name="PublishItemsFullOutputPathOutputGroup" DependsOnTargets="PublishItemsOutputGroup" Returns="@(PublishItemsFullOutputPathOutputGroupOutputs)">
+    <!-- PublishItemsOutputGroup doesn't return full output paths, expand them -->
+    <ItemGroup>
+      <_publishOutputPath Include="@(PublishItemsOutputGroupOutputs->'%(OutputPath)')" />
+      <PublishItemsFullOutputPathOutputGroupOutputs Include="@(_publishOutputPath->'%(FullPath)')" />
+    </ItemGroup>
+  </Target>
+
+</Project>

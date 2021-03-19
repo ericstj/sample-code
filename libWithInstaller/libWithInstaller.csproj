@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
+    <BeforePack>AddInstallerToPackage;$(BeforePack)</BeforePack>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InstallerProject Include="..\installer\installer.csproj" />
+  </ItemGroup>
+
+  <Target Name="AddInstallerToPackage">
+    <!-- Ensure the project is built and published before packing -->
+    <MSBuild Projects="@(InstallerProject)"
+             Targets="Build;Publish" />
+
+    <!-- Get the output of publish -->
+    <MSBuild Projects="@(InstallerProject)"
+             Targets="PublishItemsFullOutputPathOutputGroup">
+      <Output TaskParameter="TargetOutputs" ItemName="Installer" />
+    </MSBuild>
+
+    <!-- Include the publish output in the package -->
+    <ItemGroup>
+      <Content Include="@(Installer)" Pack="True" PackagePath="todo-update-to-desired-path" />
+    </ItemGroup>
+  </Target>
+
+</Project>
