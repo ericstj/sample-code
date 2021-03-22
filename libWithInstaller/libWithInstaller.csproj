@@ -12,6 +12,7 @@
   <Target Name="AddInstallerToPackage">
     <!-- Ensure the project is built and published before packing -->
     <MSBuild Projects="@(InstallerProject)"
+             Condition="'$(NoBuild)' != 'true'"
              Targets="Build;Publish" />
 
     <!-- Get the output of publish -->
