@@ -10,8 +10,19 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-  <Target Name="PublishItemsFullOutputPathOutputGroup" DependsOnTargets="PublishItemsOutputGroup" Returns="@(PublishItemsFullOutputPathOutputGroupOutputs)">
-    <!-- PublishItemsOutputGroup doesn't return full output paths, expand them -->
+  <ItemGroup>
+    <ProjectReference Include="..\installerLib\installerLib.csproj" />
+  </ItemGroup>
+
+  <!-- PublishItemsOutputGroup doesn't honor NoBuild, workaround
+       https://github.com/dotnet/sdk/issues/16481 -->
+  <PropertyGroup>
+    <PublishItemsFullOutputPathOutputGroupDependsOn>PublishItemsOutputGroup</PublishItemsFullOutputPathOutputGroupDependsOn>
+    <PublishItemsFullOutputPathOutputGroupDependsOn Condition="'$(NoBuild)' == 'true'">_PreventProjectReferencesFromBuilding;$(PublishItemsFullOutputPathOutputGroupDependsOn)</PublishItemsFullOutputPathOutputGroupDependsOn>
+  </PropertyGroup>
+  <Target Name="PublishItemsFullOutputPathOutputGroup" DependsOnTargets="$(PublishItemsFullOutputPathOutputGroupDependsOn)" Returns="@(PublishItemsFullOutputPathOutputGroupOutputs)">
+    <!-- PublishItemsOutputGroup doesn't return full output paths, expand them 
+         https://github.com/dotnet/sdk/issues/16480 -->
     <ItemGroup>
       <_publishOutputPath Include="@(PublishItemsOutputGroupOutputs->'%(OutputPath)')" />
       <PublishItemsFullOutputPathOutputGroupOutputs Include="@(_publishOutputPath->'%(FullPath)')" />

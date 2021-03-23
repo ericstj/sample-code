@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "libWithInstaller", "libWith
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "installer", "installer\installer.csproj", "{B36FCC36-C9D2-45FA-A9E0-027D08A1305F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "installerLib", "installerLib\installerLib.csproj", "{659FD64C-6DC2-479A-B895-6591DDF50BD1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B36FCC36-C9D2-45FA-A9E0-027D08A1305F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B36FCC36-C9D2-45FA-A9E0-027D08A1305F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B36FCC36-C9D2-45FA-A9E0-027D08A1305F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{659FD64C-6DC2-479A-B895-6591DDF50BD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{659FD64C-6DC2-479A-B895-6591DDF50BD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{659FD64C-6DC2-479A-B895-6591DDF50BD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{659FD64C-6DC2-479A-B895-6591DDF50BD1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
