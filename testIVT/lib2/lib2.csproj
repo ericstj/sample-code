@@ -2,11 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\lib1\key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\lib1\*.cs" />
+    <Compile Include="..\lib1\MyAttribute.cs" />
   </ItemGroup>
 
   <ItemGroup>
