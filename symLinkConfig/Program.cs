@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -36,7 +37,17 @@ namespace symLinkConfig
 
             if (TryGetSymLinkTarget(fileInfo.PhysicalPath, out string targetPath))
             {
-                c.AddJsonFile(new PhysicalFileProvider(Path.GetDirectoryName(targetPath)), Path.GetFileName(targetPath), optional, reloadOnChange);
+                string targetDirectory = Path.GetDirectoryName(targetPath);
+                string targetFile = Path.GetFileName(targetPath);
+
+                if (TryGetSymLinkTarget(targetDirectory, out string symlinkDirectory))
+                {
+                    targetDirectory = symlinkDirectory;
+                }
+
+                Console.WriteLine($"Adding file {targetFile} from {targetDirectory}");
+
+                c.AddJsonFile(new PhysicalFileProvider(targetDirectory), targetFile, optional, reloadOnChange);
             }
             else
             {

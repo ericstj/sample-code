@@ -1,12 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UseMonoPosix>true</UseMonoPosix>
+    <DefineConstants Condition="$(UseMonoPosix)">$(DefineConstants);USE_MONO_POSIX</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Update="config\appsettings.json">
+    <PackageReference Condition="$(UseMonoPosix)" Include="Mono.Posix.NETStandard" Version="1.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="config\**\*.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

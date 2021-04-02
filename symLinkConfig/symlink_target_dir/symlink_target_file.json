@@ -7,5 +7,5 @@
     }
   },
   "AllowedHosts": "*",
-  "NewValue":  "Val"
+  "TestValue":  "Start"
 }

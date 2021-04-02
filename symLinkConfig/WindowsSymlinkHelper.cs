@@ -48,7 +48,6 @@ namespace symLinkConfig
             return false;
         }
 
-
         internal static string GetSingleSymbolicLinkTarget(string path)
         {
             using (SafeFileHandle handle =
