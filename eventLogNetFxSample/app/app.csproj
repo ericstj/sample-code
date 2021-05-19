@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net4.8</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\lib\lib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- simulate misssing dependency -->
+    <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" ExcludeAssets="all" />
+  </ItemGroup>
+
+</Project>
