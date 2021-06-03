@@ -15,42 +15,30 @@ namespace Microsoft.Extensions.FileProviders
     /// <summary>
     /// Looks up files using the on-disk file system
     /// </summary>
-    /// <remarks>
-    /// When the environment variable "DOTNET_USE_POLLING_FILE_WATCHER" is set to "1" or "true", calls to
-    /// <see cref="Watch(string)" /> will use <see cref="PollingFileChangeToken" />.
-    /// </remarks>
-    public class PhysicalFileProvider : IFileProvider, IDisposable
+    public class PollingPhysicalFileProvider : IFileProvider, IDisposable
     {
-        private const string PollingEnvironmentKey = "DOTNET_USE_POLLING_FILE_WATCHER";
         private static readonly char[] _pathSeparators = new[]
             {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar};
 
         private readonly ExclusionFilters _filters;
-
-        private readonly Func<PhysicalFilesWatcher> _fileWatcherFactory;
-        private PhysicalFilesWatcher _fileWatcher;
-        private bool _fileWatcherInitialized;
-        private object _fileWatcherLock = new object();
-
-        private bool? _usePollingFileWatcher;
-        private bool? _useActivePolling;
+        private PollingPhysicalFilesWatcher _fileWatcher;
         private bool _disposed;
 
         /// <summary>
-        /// Initializes a new instance of a PhysicalFileProvider at the given root directory.
+        /// Initializes a new instance of a PollingPhysicalFileProvider at the given root directory.
         /// </summary>
         /// <param name="root">The root directory. This should be an absolute path.</param>
-        public PhysicalFileProvider(string root)
+        public PollingPhysicalFileProvider(string root)
             : this(root, ExclusionFilters.Sensitive)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of a PhysicalFileProvider at the given root directory.
+        /// Initializes a new instance of a PollingPhysicalFileProvider at the given root directory.
         /// </summary>
         /// <param name="root">The root directory. This should be an absolute path.</param>
         /// <param name="filters">Specifies which files or directories are excluded.</param>
-        public PhysicalFileProvider(string root, ExclusionFilters filters)
+        public PollingPhysicalFileProvider(string root, ExclusionFilters filters)
         {
             if (!Path.IsPathRooted(root))
             {
@@ -65,117 +53,7 @@ namespace Microsoft.Extensions.FileProviders
                 throw new DirectoryNotFoundException(Root);
             }
 
-            _filters = filters;
-            _fileWatcherFactory = () => CreateFileWatcher();
-        }
-
-        /// <summary>
-        /// Gets or sets a value that determines if this instance of <see cref="PhysicalFileProvider"/>
-        /// uses polling to determine file changes.
-        /// <para>
-        /// By default, <see cref="PhysicalFileProvider"/>  uses <see cref="FileSystemWatcher"/> to listen to file change events
-        /// for <see cref="Watch(string)"/>. <see cref="FileSystemWatcher"/> is ineffective in some scenarios such as mounted drives.
-        /// Polling is required to effectively watch for file changes.
-        /// </para>
-        /// <seealso cref="UseActivePolling"/>.
-        /// </summary>
-        /// <value>
-        /// The default value of this property is determined by the value of environment variable named <c>DOTNET_USE_POLLING_FILE_WATCHER</c>.
-        /// When <c>true</c> or <c>1</c>, this property defaults to <c>true</c>; otherwise false.
-        /// </value>
-        public bool UsePollingFileWatcher
-        {
-            get
-            {
-                if (_fileWatcher != null)
-                {
-                    return false;
-                }
-                if (_usePollingFileWatcher == null)
-                {
-                    ReadPollingEnvironmentVariables();
-                }
-                return _usePollingFileWatcher ?? false;
-            }
-            set
-            {
-                if (_fileWatcher != null)
-                {
-                    throw new InvalidOperationException(SR.Format(SR.CannotModifyWhenFileWatcherInitialized, nameof(UsePollingFileWatcher)));
-                }
-                _usePollingFileWatcher = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets a value that determines if this instance of <see cref="PhysicalFileProvider"/>
-        /// actively polls for file changes.
-        /// <para>
-        /// When <see langword="true"/>, <see cref="IChangeToken"/> returned by <see cref="Watch(string)"/> will actively poll for file changes
-        /// (<see cref="IChangeToken.ActiveChangeCallbacks"/> will be <see langword="true"/>) instead of being passive.
-        /// </para>
-        /// <para>
-        /// This property is only effective when <see cref="UsePollingFileWatcher"/> is set.
-        /// </para>
-        /// </summary>
-        /// <value>
-        /// The default value of this property is determined by the value of environment variable named <c>DOTNET_USE_POLLING_FILE_WATCHER</c>.
-        /// When <c>true</c> or <c>1</c>, this property defaults to <c>true</c>; otherwise false.
-        /// </value>
-        public bool UseActivePolling
-        {
-            get
-            {
-                if (_useActivePolling == null)
-                {
-                    ReadPollingEnvironmentVariables();
-                }
-
-                return _useActivePolling.Value;
-            }
-
-            set => _useActivePolling = value;
-        }
-
-        internal PhysicalFilesWatcher FileWatcher
-        {
-            get
-            {
-                return LazyInitializer.EnsureInitialized(
-                    ref _fileWatcher,
-                    ref _fileWatcherInitialized,
-                    ref _fileWatcherLock,
-                    _fileWatcherFactory);
-            }
-            set
-            {
-                Debug.Assert(!_fileWatcherInitialized);
-
-                _fileWatcherInitialized = true;
-                _fileWatcher = value;
-            }
-        }
-
-        internal PhysicalFilesWatcher CreateFileWatcher()
-        {
-            string root = PathUtils.EnsureTrailingSlash(Path.GetFullPath(Root));
-
-            // When both UsePollingFileWatcher & UseActivePolling are set, we won't use a FileSystemWatcher.
-            FileSystemWatcher watcher = UsePollingFileWatcher && UseActivePolling ? null : new FileSystemWatcher(root);
-            return new PhysicalFilesWatcher(root, watcher, UsePollingFileWatcher, _filters)
-            {
-                UseActivePolling = UseActivePolling,
-            };
-        }
-
-        private void ReadPollingEnvironmentVariables()
-        {
-            string environmentValue = Environment.GetEnvironmentVariable(PollingEnvironmentKey);
-            bool pollForChanges = string.Equals(environmentValue, "1", StringComparison.Ordinal) ||
-                string.Equals(environmentValue, "true", StringComparison.OrdinalIgnoreCase);
-
-            _usePollingFileWatcher = pollForChanges;
-            _useActivePolling = pollForChanges;
+            _fileWatcher = new PollingPhysicalFilesWatcher(Root);
         }
 
         /// <summary>
@@ -342,7 +220,7 @@ namespace Microsoft.Extensions.FileProviders
             // Relative paths starting with leading slashes are okay
             filter = filter.TrimStart(_pathSeparators);
 
-            return FileWatcher.CreateFileChangeToken(filter);
+            return _fileWatcher.CreateFileChangeToken(filter);
         }
     }
 }

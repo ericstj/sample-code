@@ -4,6 +4,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.FileProviders.Physical;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
@@ -16,6 +17,12 @@ namespace symLinkConfig
         public static void Main(string[] args)
         {
             CreateHostBuilder(args).Build().Run();
+
+            //while (true)
+            //{
+            //    System.Threading.Thread.Sleep(1000);
+            //    Console.WriteLine(WindowsSymLinkHelper.GetSymbolicLinkTargetLastWriteTime("config\\appsettings.json"));
+            //}
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -35,37 +42,16 @@ namespace symLinkConfig
         {
             var fileInfo = c.GetFileProvider().GetFileInfo(relativePath);
 
-            if (TryGetSymLinkTarget(fileInfo.PhysicalPath, out string targetPath))
+            if (SymlinkHelper.IsSymbolicLink(fileInfo.PhysicalPath))
             {
-                string targetDirectory = Path.GetDirectoryName(targetPath);
-                string targetFile = Path.GetFileName(targetPath);
-
-                if (TryGetSymLinkTarget(targetDirectory, out string symlinkDirectory))
-                {
-                    targetDirectory = symlinkDirectory;
-                }
-
-                Console.WriteLine($"Adding file {targetFile} from {targetDirectory}");
-
-                c.AddJsonFile(new PhysicalFileProvider(targetDirectory), targetFile, optional, reloadOnChange);
+                string targetDirectory = Path.GetDirectoryName(fileInfo.PhysicalPath);
+                string targetFile = Path.GetFileName(fileInfo.PhysicalPath);
+                c.AddJsonFile(new PollingPhysicalFileProvider(targetDirectory), targetFile, optional, reloadOnChange);
             }
             else
             {
                 c.AddJsonFile(relativePath, optional, reloadOnChange);
             }
         }
-
-        private static bool TryGetSymLinkTarget(string path, out string target)
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return WindowsSymLinkHelper.TryGetSymLinkTarget(path, out target);
-            }
-            else
-            {
-                return UnixSymlinkHelper.TryGetSymLinkTarget(path, out target);
-            }
-        }
-
     }
 }

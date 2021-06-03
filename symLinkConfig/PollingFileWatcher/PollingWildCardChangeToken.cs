@@ -11,6 +11,7 @@ using System.Threading;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Microsoft.Extensions.Primitives;
+using symLinkConfig;
 
 namespace Microsoft.Extensions.FileProviders.Physical
 {
@@ -54,30 +55,20 @@ namespace Microsoft.Extensions.FileProviders.Physical
             _directoryInfo = directoryInfo;
             Clock = clock;
 
+            _tokenSource = new CancellationTokenSource();
+            _changeToken = new CancellationChangeToken(_tokenSource.Token);
+
             _matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
             _matcher.AddInclude(pattern);
             CalculateChanges();
         }
 
-        /// <inheritdoc />
-        public bool ActiveChangeCallbacks { get; internal set; }
+        public bool ActiveChangeCallbacks => true;
 
         // Internal for unit testing.
-        internal TimeSpan PollingInterval { get; set; } = PhysicalFilesWatcher.DefaultPollingInterval;
+        internal TimeSpan PollingInterval { get; set; } = PollingPhysicalFilesWatcher.DefaultPollingInterval;
 
-        internal CancellationTokenSource CancellationTokenSource
-        {
-            get => _tokenSource;
-            set
-            {
-                Debug.Assert(_tokenSource == null, "We expect CancellationTokenSource to be initialized exactly once.");
-
-                _tokenSource = value;
-                _changeToken = new CancellationChangeToken(_tokenSource.Token);
-            }
-        }
-
-        CancellationTokenSource IPollingChangeToken.CancellationTokenSource => CancellationTokenSource;
+        CancellationTokenSource IPollingChangeToken.CancellationTokenSource => _tokenSource;
 
         private IClock Clock { get; }
 
@@ -143,7 +134,7 @@ namespace Microsoft.Extensions.FileProviders.Physical
         /// <returns>The <see cref="DateTime"/> that the file was last modified.</returns>
         protected virtual DateTime GetLastWriteUtc(string path)
         {
-            return File.GetLastWriteTimeUtc(Path.Combine(_directoryInfo.FullName, path));
+            return SymlinkHelper.GetSymbolicLinkTargetLastWriteTime(Path.Combine(_directoryInfo.FullName, path));
         }
 
         private static bool ArrayEquals(byte[] previousHash, byte[] currentHash)
@@ -192,11 +183,6 @@ namespace Microsoft.Extensions.FileProviders.Physical
 
         IDisposable IChangeToken.RegisterChangeCallback(Action<object> callback, object state)
         {
-            if (!ActiveChangeCallbacks)
-            {
-                return EmptyDisposable.Instance;
-            }
-
             return _changeToken.RegisterChangeCallback(callback, state);
         }
     }

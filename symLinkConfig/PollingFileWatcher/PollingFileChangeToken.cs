@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using Microsoft.Extensions.Primitives;
+using symLinkConfig;
 
 namespace Microsoft.Extensions.FileProviders.Physical
 {
@@ -40,35 +41,22 @@ namespace Microsoft.Extensions.FileProviders.Physical
         {
             _fileInfo = fileInfo;
             _previousWriteTimeUtc = GetLastWriteTimeUtc();
+            _tokenSource = new CancellationTokenSource();
+            _changeToken = new CancellationChangeToken(_tokenSource.Token);
         }
 
         // Internal for unit testing
-        internal static TimeSpan PollingInterval { get; set; } = PhysicalFilesWatcher.DefaultPollingInterval;
+        internal static TimeSpan PollingInterval { get; set; } = PollingPhysicalFilesWatcher.DefaultPollingInterval;
 
         private DateTime GetLastWriteTimeUtc()
         {
             _fileInfo.Refresh();
-            return _fileInfo.Exists ? _fileInfo.LastWriteTimeUtc : DateTime.MinValue;
+            return _fileInfo.Exists ? SymlinkHelper.GetSymbolicLinkTargetLastWriteTime(_fileInfo.FullName) : DateTime.MinValue;
         }
 
-        /// <summary>
-        /// Always false.
-        /// </summary>
-        public bool ActiveChangeCallbacks { get; internal set; }
+        public bool ActiveChangeCallbacks => true;
 
-        internal CancellationTokenSource CancellationTokenSource
-        {
-            get => _tokenSource;
-            set
-            {
-                Debug.Assert(_tokenSource == null, "We expect CancellationTokenSource to be initialized exactly once.");
-
-                _tokenSource = value;
-                _changeToken = new CancellationChangeToken(_tokenSource.Token);
-            }
-        }
-
-        CancellationTokenSource IPollingChangeToken.CancellationTokenSource => CancellationTokenSource;
+        CancellationTokenSource IPollingChangeToken.CancellationTokenSource => _tokenSource;
 
         /// <summary>
         /// True when the file has changed since the change token was created. Once the file changes, this value is always true
@@ -104,19 +92,8 @@ namespace Microsoft.Extensions.FileProviders.Physical
             }
         }
 
-        /// <summary>
-        /// Does not actually register callbacks.
-        /// </summary>
-        /// <param name="callback">This parameter is ignored</param>
-        /// <param name="state">This parameter is ignored</param>
-        /// <returns>A disposable object that noops when disposed</returns>
         public IDisposable RegisterChangeCallback(Action<object> callback, object state)
         {
-            if (!ActiveChangeCallbacks)
-            {
-                return EmptyDisposable.Instance;
-            }
-
             return _changeToken.RegisterChangeCallback(callback, state);
         }
     }

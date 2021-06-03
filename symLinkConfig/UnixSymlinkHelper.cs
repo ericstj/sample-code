@@ -12,6 +12,41 @@ namespace symLinkConfig
 {
     internal static class UnixSymlinkHelper
     {
+        internal static unsafe DateTime GetSymbolicLinkTargetLastWriteTime(string path)
+        {
+#if USE_MONO_POSIX
+            var fileInfo = new UnixFileInfo(path);
+
+            return fileInfo.LastWriteTime;
+#else            
+            Interop.Sys.FileStatus fileStatus;
+
+            if (Interop.Sys.Stat(path, out fileStatus) < 0)
+            {
+                return default;
+            }
+ 
+            return DateTime.FromUnixTimeSeconds(fileStatus.MTime).AddTicks(fileStatus.MTimeNsec / NanosecondsPerTick).ToLocalTime();
+#endif
+        }
+
+        internal static bool IsSymbolicLink(string path)
+        {
+#if USE_MONO_POSIX
+
+            return new UnixSymbolicLinkInfo(path).IsSymbolicLink;
+#else
+            Interop.Sys.FileStatus fileStatus;
+
+            if (Interop.Sys.Stat(path, out fileStatus) < 0)
+            {
+                return false;
+            }
+
+            return (fileStatus.Mode & Interop.Sys.FileTypes.S_IFLNK) == Interop.Sys.FileTypes.S_IFLNK;
+#endif
+        }
+
         internal static bool TryGetSymLinkTarget(string path, out string target, int maximumSymlinkDepth = 32)
         {
             target = null;
@@ -54,18 +89,6 @@ namespace symLinkConfig
                 {
                     throw new InvalidOperationException("Exceeded maximum symlink depth");
                 }
-            }
-            
-            bool IsSymbolicLink(string path)
-            {
-                Interop.Sys.FileStatus fileStatus;
-
-                if (Interop.Sys.Stat(path, out fileStatus) < 0)
-                {
-                    return false;
-                }
-
-                return (fileStatus.Mode & Interop.Sys.FileTypes.S_IFLNK) == Interop.Sys.FileTypes.S_IFLNK;
             }
 
             string GetSymbolicLinkTarget(string path)

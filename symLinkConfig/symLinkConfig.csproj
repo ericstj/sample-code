@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -6,6 +6,13 @@
     <UseMonoPosix>true</UseMonoPosix>
     <DefineConstants Condition="$(UseMonoPosix)">$(DefineConstants);USE_MONO_POSIX</DefineConstants>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="PollingFileProvider\**" />
+    <Content Remove="PollingFileProvider\**" />
+    <EmbeddedResource Remove="PollingFileProvider\**" />
+    <None Remove="PollingFileProvider\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Condition="$(UseMonoPosix)" Include="Mono.Posix.NETStandard" Version="1.0.0" />

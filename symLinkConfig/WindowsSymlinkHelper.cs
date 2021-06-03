@@ -48,6 +48,30 @@ namespace symLinkConfig
             return false;
         }
 
+        internal static unsafe DateTime GetSymbolicLinkTargetLastWriteTime(string path)
+        {
+            using (SafeFileHandle handle =
+                Interop.Kernel32.CreateFile(path,
+                0,                                                             // No file access required, this avoids file in use
+                FileShare.ReadWrite | FileShare.Delete,                        // Share all access
+                FileMode.Open,
+                Interop.Kernel32.FileOperations.FILE_FLAG_BACKUP_SEMANTICS))   // Permit opening of directories
+            {
+                if (handle.IsInvalid)
+                {
+                    throw new Win32Exception();
+                }
+
+                Interop.Kernel32.FILE_BASIC_INFO info;
+                if (!Interop.Kernel32.GetFileInformationByHandleEx(handle, Interop.Kernel32.FileBasicInfo, &info, (uint)sizeof(Interop.Kernel32.FILE_BASIC_INFO)))
+                {
+                    throw new Win32Exception();
+                }
+
+                return DateTime.FromFileTime(info.LastWriteTime);
+            }
+        }
+
         internal static string GetSingleSymbolicLinkTarget(string path)
         {
             using (SafeFileHandle handle =
