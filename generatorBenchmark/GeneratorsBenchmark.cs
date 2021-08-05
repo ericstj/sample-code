@@ -43,8 +43,21 @@ namespace generatorBenchmark
         }
 
         List<ISourceGenerator> _generators = new List<ISourceGenerator>();
-        public IEnumerable<object> Generators() => _generators;
+        public IEnumerable<object> Generators() => _generators.Select(g => new GeneratorParameter(g));
 
+
+        /// <summary>
+        /// Wrap the generator to get a shorter name
+        /// </summary>
+        public sealed class GeneratorParameter : ISourceGenerator
+        {
+            private ISourceGenerator Value { get; }
+            public GeneratorParameter(ISourceGenerator inner) => Value = inner;
+            public override string ToString() => Value.GetType().Name;
+
+            public void Initialize(GeneratorInitializationContext context) => Value.Initialize(context);
+            public void Execute(GeneratorExecutionContext context) => Value.Execute(context);
+        }
 
         private static Compilation CreateCompilation(string source)
             => CSharpCompilation.Create("compilation",

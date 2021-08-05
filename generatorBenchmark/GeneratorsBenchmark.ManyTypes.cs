@@ -39,7 +39,7 @@ namespace generatorBenchmark
         public void ManyTypes(ISourceGenerator generator)
         {
             GeneratorDriver  driver = CSharpGeneratorDriver.Create(generator);
-            driver = driver.RunGeneratorsAndUpdateCompilation(_singleTypeCompilation!, out var outputCompilation, out var diagnostics);
+            driver = driver.RunGeneratorsAndUpdateCompilation(_manyTypesCompilation!, out var outputCompilation, out var diagnostics);
         }
     }
     
