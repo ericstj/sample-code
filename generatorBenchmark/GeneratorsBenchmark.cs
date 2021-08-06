@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using Microsoft.CodeAnalysis;
@@ -59,9 +60,38 @@ namespace generatorBenchmark
             public void Execute(GeneratorExecutionContext context) => Value.Execute(context);
         }
 
-        private static Compilation CreateCompilation(string source)
+        private static Compilation CreateCompilation(long numTypes)
+        {
+            const long typesPerFile = 100000;
+            List<string> sources = new List<string>();
+
+            long typesWritten = 0;
+
+            while(typesWritten < numTypes)
+            {
+                var source = new StringBuilder();
+                source.AppendLine("namepace MyCode");
+                source.AppendLine("{");
+
+                while (typesWritten++ < numTypes)
+                {
+                    source.AppendLine($"    public class MyPoco{typesWritten}");
+                    source.AppendLine(@"
+        {
+            public void SomeMethod() {}
+            public string Prop { get; set; }
+        }");
+                    if ((typesWritten % typesPerFile) == 0) break;
+                }
+                source.AppendLine("}");
+                sources.Add(source.ToString());
+            }
+
+            return CreateCompilation(sources);
+        }
+        private static Compilation CreateCompilation(IEnumerable<string> sources)
             => CSharpCompilation.Create("compilation",
-                new[] { CSharpSyntaxTree.ParseText(source) },
+                sources.Select(s => CSharpSyntaxTree.ParseText(s)).ToArray(),
                 new[] { MetadataReference.CreateFromFile(typeof(Binder).GetTypeInfo().Assembly.Location) },
                 new CSharpCompilationOptions(OutputKind.ConsoleApplication));
     }
