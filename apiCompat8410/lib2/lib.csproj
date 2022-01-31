@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>2.0.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.DotNet.ApiCompat" Version="7.0.0-beta.22081.3" />
+    <ProjectReference Include="..\lib\lib.csproj" ReferenceOutputAssembly="false" OutputItemType="ResolvedMatchingContract" />
+  </ItemGroup>
+
+</Project>
