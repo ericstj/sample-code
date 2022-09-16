@@ -1,0 +1,7 @@
+<Project>
+  <!-- Use the `netstandard2.0` System.Text.Json library when compiling .NETFramework libraries -->
+  <!-- <ItemGroup Condition="'$(OutputType)' == 'Library' AND '$(TargetFrameworkIdentifier)' == '.NETFramework' AND '@(PackageReference->AnyHaveMetadataValue('Identity', 'System.Text.Json'))'">
+    <PackageReference Update="System.Text.Json" ExcludeAssets="all" GeneratePathProperty="true" />
+    <Reference Condition="'$(PkgSystem_Text_Json)' != ''" Include="$(PkgSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" />
+  </ItemGroup> -->
+</Project>
