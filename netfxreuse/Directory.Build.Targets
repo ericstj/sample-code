@@ -2,7 +2,7 @@
   <!-- Use the `netstandard2.0` System.Text.Json library when compiling .NETFramework libraries -->
   <ItemGroup Condition="'$(OutputType)' == 'Library' AND '$(TargetFrameworkIdentifier)' == '.NETFramework' AND '@(PackageReference->AnyHaveMetadataValue('Identity', 'System.Text.Json'))'">
     <!-- prevent the default reference for S.T.J to be used-->
-    <PackageReference Update="System.Text.Json" ExcludeAssets="all" GeneratePathProperty="true" />
+    <PackageReference Update="System.Text.Json" ExcludeAssets="compile;runtime" GeneratePathProperty="true" />
     <!-- reference the `netstandard2.0` library, private=false to ensure it's never copied -->
     <Reference Condition="'$(PkgSystem_Text_Json)' != ''" Include="$(PkgSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" Private="false" />
   </ItemGroup>
