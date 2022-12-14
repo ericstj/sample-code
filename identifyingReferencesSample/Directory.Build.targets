@@ -1,0 +1,43 @@
+<Project>
+
+  <PropertyGroup>
+    <DirectReferencesAnalyzerDataFile>$(IntermediateOutputPath)directreferences.analyzerdata.txt</DirectReferencesAnalyzerDataFile>
+  </PropertyGroup>
+
+  <Target Name="IdentifyDirectReferences" 
+          BeforeTargets="CoreCompile"
+          Inputs="$(MSBuildAllProjects)"
+          Outputs="$(DirectReferencesAnalyzerDataFile)">
+  
+    <ItemGroup>
+      <!-- identify direct and non-implicit package references -->
+      <_directPackageReferences Include="@(PackageReference)" 
+                                Condition="'%(PackageReference.IsImplicitlyDefined)' != 'true'" />
+      <_referencesByPackageReference Include="@(ReferencePathWithRefAssemblies->'%(NuGetPackageId)')" OriginalReferencePath="%(Identity)" />
+      <_directRefPathsFromPackageReferences Include="@(_referencesByPackageReference)"
+                              Condition="'@(_referencesByPackageReference)' == '@(_directPackageReferences)' AND '%(Identity)' != ''" />
+
+      <_referencesByProjectReference Include="@(ReferencePathWithRefAssemblies->'%(ProjectReferenceOriginalItemSpec)')" OriginalReferencePath="%(Identity)" />
+
+      <!-- Identify direct project references, transitive project referneces happen to have NuGetPackageId metadata set -->
+      <_directProjectReferences Include="@(ProjectReference)" Condition="'%(ProjectReference.NuGetPackageId)' == ''" />
+      <_directRefPathsFromProjectReferences Include="@(_referencesByProjectReference)" 
+                                  Condition="'@(_referencesByProjectReference)' == '@(_directProjectReferences)' AND '%(Identity)' != ''" />
+
+      <!-- Identify other direct references as anything not a project or package reference -->
+      <_directRefPathsOthers Include="@(ReferencePathWithRefAssemblies)" 
+                             Condition="'%(ReferencePathWithRefAssemblies.NuGetPackageId)' == '' AND '%(ReferencePathWithRefAssemblies.ReferenceSourceTarget)' == 'ResolveAssemblyReference'" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(DirectReferencesAnalyzerDataFile)"
+                      Lines="@(_directRefPathsFromPackageReferences->'PackageReference|%(NuGetPackageId)|%(OriginalReferencePath)');
+                             @(_directRefPathsFromProjectReferences->'ProjectReference|%(OriginalProjectReferenceItemSpec)|%(OriginalReferencePath)');
+                             @(_directRefPathsOthers->'Reference|%(OriginalItemSpec)|%(Identity)')"
+                      Overwrite="true"/>
+
+    <ItemGroup>
+      <AdditionalFiles Include="$(DirectReferencesAnalyzerDataFile)" />
+    </ItemGroup>
+  </Target>
+
+</Project>
