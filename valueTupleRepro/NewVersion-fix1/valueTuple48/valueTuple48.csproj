@@ -17,7 +17,7 @@
     <ProjectReference Include="..\libNet462\libNet462.csproj" />
   </ItemGroup>
 
-  <Target Name="_removeValueTupleRedirect" AfterTargets="ResolveAssemblyReferences">
+  <Target Name="_removeValueTupleRedirect" AfterTargets="ResolveAssemblyReferences" Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net471'))">
     <ItemGroup>
       <SuggestedBindingRedirects Remove="System.ValueTuple, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
     </ItemGroup>
