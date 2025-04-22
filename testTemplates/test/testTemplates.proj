@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.Build.NoTargets">
+
+  <PropertyGroup>
+    <!-- unused - just a default value -->
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <TestTemplate Include="../Template/bin/Release/MyConsole.Template.*.nupkg" TemplateName="myconsole" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,43 @@
+<Project>
+  <PropertyGroup>
+    <!-- can be anywhere, but should be private to the tests -->
+    <TemplateInstallDirectory>$([MSBuild]::NormalizeDirectory('$(OutDir)', '.templates'))</TemplateInstallDirectory>
+
+    <!-- ideally under the repo's artifacts path so that the output can be seen by CG / static analysis -->
+    <ProjectCreateDirectory>$([MSBuild]::NormalizeDirectory('$(OutDir)', 'testProjects'))</ProjectCreateDirectory>
+
+    <!-- can be customized to the repo's package directory-->
+    <RestoreAdditionalDirectory>$([MSBuild]::NormalizeDirectory('$(OutDir)', 'packages'))</RestoreAdditionalDirectory>
+
+    <TemplateBuildArgs>/p:RestoreAdditionalProjectSources=$(RestoreAdditionalDirectory)</TemplateBuildArgs>
+    <_dotnetNewArgs>--debug:disable-sdk-templates --debug:custom-hive $(TemplateInstallDirectory)</_dotnetNewArgs>
+  </PropertyGroup>
+
+  <Target Name="InstallTemplates">
+    <RemoveDir Directories="$(TemplateInstallDirectory)" />
+    <MakeDir Directories="$(TemplateInstallDirectory)" />
+    <Message Text="Installing templates to $(TemplateInstallDirectory)" Importance="high" />
+    <Exec Command="dotnet new install $(_dotnetNewArgs) %(TestTemplate.FullPath)" />
+  </Target>
+
+  <Target Name="CreateTestProjects" DependsOnTargets="InstallTemplates" Outputs="$(ProjectCreateDirectory)%(TestTemplate.TemplateName)">
+    <RemoveDir Directories="$(ProjectCreateDirectory)" />
+    <MakeDir Directories="$(ProjectCreateDirectory)" />
+    
+    <!-- Don't import any repo files by convention, so that the generated projects behave as if they are plain-old-customer projects, not using arcade, repo props, etc -->
+    <WriteLinesToFile File="$(ProjectCreateDirectory)Directory.Build.props" Lines="&lt;Project /&gt;" />
+    <WriteLinesToFile File="$(ProjectCreateDirectory)Directory.Packages.props" Lines="&lt;Project /&gt;" />
+    <WriteLinesToFile File="$(ProjectCreateDirectory)Directory.Build.targets" Lines="&lt;Project /&gt;" />
+
+    <Message Text="Creating test project $(ProjectCreateDirectory)%(TestTemplate.TemplateName)" Importance="high" />
+    <!-- TODO: support metadata for parameterized templates -->
+    <Exec Command="dotnet new $(_dotnetNewArgs) %(TestTemplate.TemplateName) -o $(ProjectCreateDirectory)%(TestTemplate.TemplateName)" />
+  </Target>
+
+  <Target Name="BuildTestProjects" Condition="'@(TestTemplate)' != ''" DependsOnTargets="CreateTestProjects" BeforeTargets="Build" Outputs="$(ProjectCreateDirectory)%(TestTemplate.TemplateName)">
+     
+    <Message Text="Building test project $(ProjectCreateDirectory)%(TestTemplate.TemplateName)" Importance="high" />
+    <Exec Command="dotnet build -bl $(TemplateBuildArgs)" WorkingDirectory="$(ProjectCreateDirectory)%(TestTemplate.TemplateName)" />
+  </Target>
+
+</Project>
